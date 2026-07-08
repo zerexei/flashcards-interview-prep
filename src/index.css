@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+@custom-variant dark (&:is(.dark *)); /* Only add if using class-based dark mode */
+
+@import "@ad-technology-inc/design-system/app.css";
+
 @layer base {
   :root {
     --background: 0 0% 4%;
@@ -15,13 +19,13 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply tracking-tight font-bold;
+    @apply font-bold tracking-tight;
   }
 }
 
 @layer components {
   .section-container {
-    @apply max-w-5xl mx-auto px-6 py-20 md:py-32;
+    @apply px-6 py-20 mx-auto max-w-5xl md:py-32;
   }
 
   .text-muted {
@@ -33,7 +37,7 @@
   }
 
   .card {
-    @apply bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-700 transition-all duration-300;
+    @apply overflow-hidden rounded-xl border transition-all duration-300 bg-zinc-900/50 border-zinc-800 hover:border-zinc-700;
   }
 
   .tag {
@@ -51,7 +55,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors;
+  @apply rounded-full transition-colors bg-zinc-800 hover:bg-zinc-700;
 }
 
 /* Typography Utilities */
