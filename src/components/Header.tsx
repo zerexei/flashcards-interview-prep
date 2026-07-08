@@ -30,9 +30,7 @@ export const Header: React.FC = () => {
   }, []);
 
   // Standard nav links logic based on whether Firebase is enabled and user role
-  const navLinks = [
-    { name: ROUTES.flashcards.title, path: ROUTES.flashcards.path }
-  ];
+  const navLinks: { name: string; path: string }[] = [];
 
   if (isFirebaseEnabled) {
     if (isAuth) {
