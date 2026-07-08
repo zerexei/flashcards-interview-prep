@@ -8,14 +8,16 @@ import { signOut } from 'firebase/auth';
 import ROUTES from '@/routes';
 
 export const Header: React.FC = () => {
-  const { isAuth, isAdmin } = useAuthContext();
+  const { isAuth, isAdmin, isFirebaseEnabled } = useAuthContext();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      if (auth) {
+        await signOut(auth);
+      }
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -27,12 +29,21 @@ export const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks = isAuth
-    ? [
-        { name: ROUTES.flashcards.title, path: ROUTES.flashcards.path },
-        ...(isAdmin ? [{ name: 'Admin', path: ROUTES.admin.flashcards.path }] : []),
-      ]
-    : [{ name: ROUTES.login.title, path: ROUTES.login.path }];
+  // Standard nav links logic based on whether Firebase is enabled and user role
+  const navLinks = [
+    { name: ROUTES.flashcards.title, path: ROUTES.flashcards.path }
+  ];
+
+  if (isFirebaseEnabled) {
+    if (isAuth) {
+      if (isAdmin) {
+        navLinks.push({ name: 'Admin', path: ROUTES.admin.flashcards.path });
+      }
+    } else {
+      navLinks.push({ name: ROUTES.login.title, path: ROUTES.login.path });
+    }
+  }
+
 
   return (
     <header
@@ -63,7 +74,7 @@ export const Header: React.FC = () => {
             </Link>
           ))}
 
-          {isAuth && (
+          {isFirebaseEnabled && isAuth && (
             <button
               onClick={handleLogout}
               className="button button-sm button-ghost flex items-center gap-1.5"
@@ -100,7 +111,7 @@ export const Header: React.FC = () => {
                 {link.name}
               </Link>
             ))}
-            {isAuth && (
+            {isFirebaseEnabled && isAuth && (
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);

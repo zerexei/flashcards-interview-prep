@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Section } from '@/components/common/Section';
+import { Section } from '@/components/Section';
 import { useAuthContext } from '@/context/AuthContext';
 import { cn } from '@/utils/cn';
 import {
@@ -13,10 +13,10 @@ import {
   Sparkles,
   ShieldCheck,
 } from 'lucide-react';
-import { useFlashcards } from '../hooks/useFlashcards';
-import { Flashcard, TAG_CATEGORIES } from '../types/flashcard.types';
+import { useFlashcards } from '@/hooks/useFlashcards';
+import { Flashcard, TAG_CATEGORIES } from '@/types/flashcard.types';
 import { Link } from 'react-router-dom';
-import { useModel } from '@/utils/useModel';
+import { useModel } from '@/hooks/useModel';
 import ROUTES from '@/routes';
 
 interface AiEvaluationResult {
@@ -27,7 +27,7 @@ interface AiEvaluationResult {
 }
 
 export const FlashcardGamePage: React.FC = () => {
-  const { isAdmin } = useAuthContext();
+  const { isAuth, isAdmin } = useAuthContext();
 
   const { cards, loading, fetchCards } = useFlashcards();
   const [currentCard, setCurrentCard] = useState<Flashcard | null>(null);
@@ -239,12 +239,12 @@ export const FlashcardGamePage: React.FC = () => {
             <div className="flex justify-end">
               <button
                 onClick={() => setIsDeepMode(!isDeepMode)}
-                disabled={!isAdmin}
-                title={isAdmin ? 'AI Evaluation' : 'Admin only'}
+                disabled={!isAuth}
+                title={isAuth ? 'AI Evaluation' : 'Log in to use AI Evaluation'}
                 className={cn(
                   'button button-sm gap-2 uppercase tracking-wider',
                   isDeepMode ? 'button-accent' : 'button-secondary',
-                  !isAdmin && 'cursor-not-allowed opacity-50',
+                  !isAuth && 'cursor-not-allowed opacity-50',
                 )}
               >
                 <Brain size={14} />

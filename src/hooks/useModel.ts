@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 
-const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_GOOGLE_GEN_AI_KEY });
+const apiKey = import.meta.env.VITE_GOOGLE_GEN_AI_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export function useModel() {
     const [response, setResponse] = useState<string>("");
@@ -12,6 +13,13 @@ export function useModel() {
         setLoading(true);
         setError(null);
         setResponse("");
+
+        if (!ai) {
+            const err = new Error("Gemini API key is not configured. Deep Mode is disabled.");
+            setError(err);
+            setLoading(false);
+            return "";
+        }
 
         try {
             const result = await ai.models.generateContent({

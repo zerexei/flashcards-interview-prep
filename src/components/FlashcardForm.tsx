@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Flashcard, FlashcardInput, TAG_CATEGORIES } from '../../types/flashcard.types';
+import { Flashcard, FlashcardInput, TAG_CATEGORIES } from '@/types/flashcard.types';
 import { cn } from '@/utils/cn';
 import { X as CloseIcon, Plus } from 'lucide-react';
 

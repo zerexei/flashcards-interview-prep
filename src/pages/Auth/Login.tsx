@@ -7,7 +7,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth';
-import { Section } from '@/components/common/Section';
+import { Section } from '@/components/Section';
 import { Mail, Lock, User, Chrome, Loader2, ArrowRight } from 'lucide-react';
 import ROUTES from '@/routes';
 
@@ -24,7 +24,7 @@ const AuthPage = () => {
     setLoading(true);
     setError('');
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(auth!, googleProvider!);
       navigate(ROUTES.flashcards.path);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed.');
@@ -39,9 +39,9 @@ const AuthPage = () => {
     setError('');
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        await signInWithEmailAndPassword(auth!, email, password);
       } else {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth!, email, password);
         if (name) {
           await updateProfile(userCredential.user, { displayName: name });
         }

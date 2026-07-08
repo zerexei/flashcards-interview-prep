@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { Routes, Route, useLocation, Outlet, Navigate } from 'react-router-dom';
 import { useAuthContext } from '@/context/AuthContext';
-import { Layout } from '@/components/layout/Layout';
+import { Layout } from '@/components/Layout';
 import Login from '@/pages/Auth/Login';
-import { FlashcardGamePage } from '@/modules/flashcard/game/FlashcardGamePage';
-import { FlashcardAdminPage } from '@/modules/flashcard/admin/FlashcardAdminPage';
+import { FlashcardGamePage } from '@/pages/Game/FlashcardGamePage';
+import { FlashcardAdminPage } from '@/pages/Admin/FlashcardAdminPage';
 import ROUTES from '@/routes';
 
 const ScrollToTop = () => {
@@ -15,21 +15,24 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Defined outside App to avoid re-creation on every render.
-const ProtectedRoute = ({ isAuth }: { isAuth: boolean }) =>
-  isAuth ? <Outlet /> : <Navigate to={ROUTES.login.path} replace />;
-
-const AdminRoute = ({ isAuth, isAdmin }: { isAuth: boolean; isAdmin: boolean }) => {
-  if (!isAuth) return <Navigate to={ROUTES.login.path} replace />;
-  if (!isAdmin) return <Navigate to={ROUTES.flashcards.path} replace />;
+const AdminRoute = ({ isFirebaseEnabled, isAdmin }: { isFirebaseEnabled: boolean; isAdmin: boolean }) => {
+  // If Firebase is not configured, admin is unauthorized.
+  if (!isFirebaseEnabled || !isAdmin) {
+    return <Navigate to={ROUTES.flashcards.path} replace />;
+  }
   return <Outlet />;
 };
 
-const LoginRoute = ({ isAuth }: { isAuth: boolean }) =>
-  isAuth ? <Navigate to={ROUTES.flashcards.path} replace /> : <Login />;
+const LoginRoute = ({ isFirebaseEnabled, isAuth }: { isFirebaseEnabled: boolean; isAuth: boolean }) => {
+  // If Firebase is disabled or user is already logged in, redirect to flashcards.
+  if (!isFirebaseEnabled || isAuth) {
+    return <Navigate to={ROUTES.flashcards.path} replace />;
+  }
+  return <Login />;
+};
 
 function App() {
-  const { isAuth, isAdmin, loading } = useAuthContext();
+  const { isAuth, isAdmin, isFirebaseEnabled, loading } = useAuthContext();
 
   if (loading) {
     return (
@@ -47,16 +50,19 @@ function App() {
           {/* Redirect / to /flash-cards */}
           <Route index element={<Navigate to={ROUTES.flashcards.path} replace />} />
 
-          {/* Redirect authenticated users away from /login */}
-          <Route path={ROUTES.login.path} element={<LoginRoute isAuth={isAuth} />} />
+          {/* Login Route (Guest usage redirects to flashcards if Firebase is disabled) */}
+          <Route
+            path={ROUTES.login.path}
+            element={<LoginRoute isFirebaseEnabled={isFirebaseEnabled} isAuth={isAuth} />}
+          />
 
-          {/* Authenticated routes */}
-          <Route element={<ProtectedRoute isAuth={isAuth} />}>
-            <Route path={ROUTES.flashcards.path} element={<FlashcardGamePage />} />
-          </Route>
+          {/* Guest Route: Flashcard game page is open to everyone */}
+          <Route path={ROUTES.flashcards.path} element={<FlashcardGamePage />} />
 
-          {/* Admin routes */}
-          <Route element={<AdminRoute isAuth={isAuth} isAdmin={isAdmin} />}>
+          {/* Admin routes: Lock if no config or not admin */}
+          <Route
+            element={<AdminRoute isFirebaseEnabled={isFirebaseEnabled} isAdmin={isAdmin} />}
+          >
             <Route path={ROUTES.admin.flashcards.path} element={<FlashcardAdminPage />} />
           </Route>
 

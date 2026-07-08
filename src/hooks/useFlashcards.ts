@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { Flashcard, FlashcardInput } from '../types/flashcard.types';
-import { flashcardService } from '../services/flashcardService';
+import { Flashcard, FlashcardInput } from '@/types/flashcard.types';
+import { flashcardService } from '@/services/flashcardService';
 
 export const useFlashcards = () => {
   const [cards, setCards] = useState<Flashcard[]>([]);

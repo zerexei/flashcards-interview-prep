@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Section } from '@/components/common/Section';
-import { useFlashcards } from '../hooks/useFlashcards';
-import { Flashcard, FlashcardInput } from '../types/flashcard.types';
-import { FlashcardForm } from './components/FlashcardForm';
+import { Section } from '@/components/Section';
+import { useFlashcards } from '@/hooks/useFlashcards';
+import { Flashcard, FlashcardInput } from '@/types/flashcard.types';
+import { FlashcardForm } from '@/components/FlashcardForm';
 import { cn } from '@/utils/cn';
 import {
   Plus,
