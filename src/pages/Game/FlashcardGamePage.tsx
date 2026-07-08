@@ -147,9 +147,9 @@ export const FlashcardGamePage: React.FC = () => {
   return (
     <Section
       id="flashcards"
-      className="min-h-[80vh] flex flex-col items-center justify-center py-20"
+      className="min-h-[80vh] flex flex-col items-center justify-center max-w-3xl"
     >
-      <div className="w-full max-w-2xl px-6 relative">
+      <div className="w-full relative">
         {/* Settings Toggle */}
         <div className="absolute -top-12 right-6 flex items-center gap-4">
           <button

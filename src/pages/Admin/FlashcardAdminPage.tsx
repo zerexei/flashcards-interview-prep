@@ -51,8 +51,8 @@ export const FlashcardAdminPage: React.FC = () => {
   );
 
   return (
-    <Section id="admin-cards" className="min-h-screen py-20">
-      <div className="max-w-6xl mx-auto px-6 space-y-8">
+    <Section id="admin-cards" className="min-h-screen max-w-6xl">
+      <div className="w-full space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
