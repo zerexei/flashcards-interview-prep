@@ -10,19 +10,26 @@ interface FlashcardFormProps {
   title: string;
 }
 
-export const FlashcardForm: React.FC<FlashcardFormProps> = ({ 
-  initialData, 
-  onSubmit, 
+const CARD_TYPES = [
+  { value: 'recall', label: 'Recall' },
+  { value: 'understanding', label: 'Understanding' },
+  { value: 'structure', label: 'Structure' },
+  { value: 'fill-in', label: 'Fill-in' },
+] as const;
+
+export const FlashcardForm: React.FC<FlashcardFormProps> = ({
+  initialData,
+  onSubmit,
   onCancel,
-  title 
+  title,
 }) => {
   const [formData, setFormData] = useState<FlashcardInput>({
-    question: initialData?.question || '',
-    fixedAnswer: initialData?.fixedAnswer || '',
-    questionPrompt: initialData?.questionPrompt || '',
-    tags: initialData?.tags || [],
-    difficulty: initialData?.difficulty || 3,
-    cardType: initialData?.cardType || 'recall',
+    question: initialData?.question ?? '',
+    fixedAnswer: initialData?.fixedAnswer ?? '',
+    questionPrompt: initialData?.questionPrompt ?? '',
+    tags: initialData?.tags ?? [],
+    difficulty: initialData?.difficulty ?? 3,
+    cardType: initialData?.cardType ?? 'recall',
     isActive: initialData?.isActive ?? true,
   });
 
@@ -31,7 +38,7 @@ export const FlashcardForm: React.FC<FlashcardFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.question.trim() || !formData.fixedAnswer.trim()) return;
-    
+
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
@@ -45,7 +52,7 @@ export const FlashcardForm: React.FC<FlashcardFormProps> = ({
       ...prev,
       tags: prev.tags.includes(tag)
         ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag]
+        : [...prev.tags, tag],
     }));
   };
 
@@ -53,74 +60,78 @@ export const FlashcardForm: React.FC<FlashcardFormProps> = ({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Plus size={18} className="text-accent" />
-          <h3 className="text-sm font-bold text-white uppercase tracking-widest">{title}</h3>
+          <Plus size={18} className="text-primary" />
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">{title}</h3>
         </div>
-        <button onClick={onCancel} className="text-zinc-500 hover:text-white transition-colors">
+        <button onClick={onCancel} className="button button-ghost p-1!">
           <CloseIcon size={20} />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Question</label>
+        <div className="form-group">
+          <label className="form-label">Question</label>
           <textarea
             required
             value={formData.question}
             onChange={e => setFormData({ ...formData, question: e.target.value })}
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-accent/50 min-h-[80px]"
+            className="form-textarea"
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Fixed Answer</label>
+        <div className="form-group">
+          <label className="form-label">Fixed Answer</label>
           <textarea
             required
             value={formData.fixedAnswer}
             onChange={e => setFormData({ ...formData, fixedAnswer: e.target.value })}
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-accent/50 min-h-[80px]"
+            className="form-textarea"
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Question Prompt</label>
+          <div className="form-group">
+            <label className="form-label">Question Prompt</label>
             <input
               required
               value={formData.questionPrompt}
               onChange={e => setFormData({ ...formData, questionPrompt: e.target.value })}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-accent/50"
+              className="form-input"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Card Type</label>
+          <div className="form-group">
+            <label className="form-label">Card Type</label>
             <select
               value={formData.cardType}
-              onChange={e => setFormData({ ...formData, cardType: e.target.value as any })}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-accent/50"
+              onChange={e =>
+                setFormData({ ...formData, cardType: e.target.value as Flashcard['cardType'] })
+              }
+              className="form-select"
             >
-              <option value="recall">Recall</option>
-              <option value="understanding">Understanding</option>
-              <option value="structure">Structure</option>
-              <option value="fill-in">Fill-in</option>
+              {CARD_TYPES.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
             </select>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Difficulty (1-5)</label>
+          <div className="form-group">
+            <label className="form-label">Difficulty (1–5)</label>
             <input
               type="number"
               min="1"
               max="5"
               value={formData.difficulty}
-              onChange={e => setFormData({ ...formData, difficulty: parseInt(e.target.value) })}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-accent/50"
+              onChange={e => {
+                const parsed = parseInt(e.target.value, 10);
+                setFormData({ ...formData, difficulty: Number.isNaN(parsed) ? formData.difficulty : parsed });
+              }}
+              className="form-input"
             />
           </div>
           <div className="flex items-center gap-4 pt-6">
-            <label className="flex items-center gap-3 cursor-pointer group">
+            <label className="form-checkbox-wrapper cursor-pointer group">
               <div className="relative">
                 <input
                   type="checkbox"
@@ -129,27 +140,29 @@ export const FlashcardForm: React.FC<FlashcardFormProps> = ({
                   className="sr-only"
                 />
                 <div className={cn(
-                  "w-10 h-5 rounded-full transition-colors duration-300",
-                  formData.isActive ? "bg-accent" : "bg-zinc-800"
-                )}></div>
+                  'w-10 h-5 rounded-full transition-colors duration-300',
+                  formData.isActive ? 'bg-primary' : 'bg-neutral',
+                )} />
                 <div className={cn(
-                  "absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-300",
-                  formData.isActive ? "translate-x-5" : "translate-x-0"
-                )}></div>
+                  'absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-300',
+                  formData.isActive ? 'translate-x-5' : 'translate-x-0',
+                )} />
               </div>
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest group-hover:text-zinc-300 transition-colors">
+              <span className="form-label group-hover:text-foreground transition-colors">
                 Active Card
               </span>
             </label>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Tags</label>
-          <div className="max-h-40 overflow-y-auto space-y-4 pr-2 scrollbar-thin scrollbar-thumb-zinc-800">
+        <div className="form-group">
+          <label className="form-label">Tags</label>
+          <div className="max-h-40 overflow-y-auto space-y-4 pr-2">
             {Object.entries(TAG_CATEGORIES).map(([category, tags]: [string, string[]]) => (
               <div key={category} className="space-y-2">
-                <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">{category}</p>
+                <p className="text-[9px] text-neutral-foreground font-bold uppercase tracking-widest">
+                  {category}
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {tags.map(tag => (
                     <button
@@ -157,10 +170,10 @@ export const FlashcardForm: React.FC<FlashcardFormProps> = ({
                       key={tag}
                       onClick={() => toggleTag(tag)}
                       className={cn(
-                        "px-2 py-1 text-[9px] font-bold rounded-lg border transition-all duration-200",
+                        'badge transition-all duration-200',
                         formData.tags.includes(tag)
-                          ? "bg-accent/20 border-accent text-accent"
-                          : "bg-zinc-800/30 border-zinc-700/50 text-zinc-500 hover:border-zinc-600"
+                          ? 'badge-info'
+                          : 'hover:border-primary/50',
                       )}
                     >
                       {tag}
@@ -176,16 +189,16 @@ export const FlashcardForm: React.FC<FlashcardFormProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-bold transition-all"
+            className="flex-1 button button-secondary"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-2 py-4 bg-accent hover:bg-accent/90 text-white rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(255,45,32,0.2)] disabled:opacity-50"
+            className="flex-2 button button-primary"
           >
-            {isSubmitting ? 'Saving...' : initialData ? 'Update Card' : 'Create Card'}
+            {isSubmitting ? 'Saving…' : initialData ? 'Update Card' : 'Create Card'}
           </button>
         </div>
       </form>

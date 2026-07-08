@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "../../utils/cn";
-import { Menu, X, LogOut } from "lucide-react";
-import { useAuth } from "../../utils/useAuth";
-import { auth } from "../../utils/database";
-import { signOut } from "firebase/auth";
-import ROUTES from "@/routes";
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/utils/cn';
+import { Menu, X, LogOut } from 'lucide-react';
+import { useAuthContext } from '@/context/AuthContext';
+import { auth } from '@/utils/database';
+import { signOut } from 'firebase/auth';
+import ROUTES from '@/routes';
 
 export const Header: React.FC = () => {
-  const { isAuth, isAdmin } = useAuth();
+  const { isAuth, isAdmin } = useAuthContext();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -17,39 +17,35 @@ export const Header: React.FC = () => {
     try {
       await signOut(auth);
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error('Logout error:', error);
     }
   };
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const navLinks = isAuth
     ? [
         { name: ROUTES.flashcards.title, path: ROUTES.flashcards.path },
-        ...(isAdmin
-          ? [{ name: "Admin", path: ROUTES.admin.flashcards.path }]
-          : []),
+        ...(isAdmin ? [{ name: 'Admin', path: ROUTES.admin.flashcards.path }] : []),
       ]
     : [{ name: ROUTES.login.title, path: ROUTES.login.path }];
 
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b',
         isScrolled
-          ? "bg-black/80 backdrop-blur-md border-zinc-800 py-4"
-          : "bg-transparent border-transparent py-6",
+          ? 'bg-background/80 backdrop-blur-md border-border py-4'
+          : 'bg-transparent border-transparent py-6',
       )}
     >
       <div className="max-w-5xl mx-auto px-6 flex items-center justify-between">
-        <Link to={ROUTES.home.path} className="text-lg font-bold tracking-tighter">
-          AD<span className="text-accent">.</span> Flashcards
+        <Link to={ROUTES.home.path} className="text-lg font-bold tracking-tighter text-foreground">
+          AD<span className="text-primary">.</span> Flashcards
         </Link>
 
         {/* Desktop Nav */}
@@ -59,10 +55,8 @@ export const Header: React.FC = () => {
               key={link.path}
               to={link.path}
               className={cn(
-                "text-sm font-medium transition-colors hover:text-white",
-                location.pathname === link.path
-                  ? "text-accent"
-                  : "text-zinc-400",
+                'text-sm font-medium transition-colors hover:text-foreground',
+                location.pathname === link.path ? 'text-primary' : 'text-neutral-foreground',
               )}
             >
               {link.name}
@@ -72,7 +66,7 @@ export const Header: React.FC = () => {
           {isAuth && (
             <button
               onClick={handleLogout}
-              className="text-sm font-medium text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5"
+              className="button button-sm button-ghost flex items-center gap-1.5"
             >
               <LogOut size={14} />
               Logout
@@ -82,7 +76,7 @@ export const Header: React.FC = () => {
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden text-zinc-400 hover:text-white"
+          className="md:hidden text-neutral-foreground hover:text-foreground transition-colors"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -91,17 +85,15 @@ export const Header: React.FC = () => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-zinc-900 border-b border-zinc-800 p-6 animate-fade-in">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-card border-b border-border p-6 animate-fade-in">
           <nav className="flex flex-col gap-6">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 className={cn(
-                  "text-lg font-medium",
-                  location.pathname === link.path
-                    ? "text-white"
-                    : "text-zinc-400",
+                  'text-lg font-medium transition-colors',
+                  location.pathname === link.path ? 'text-foreground' : 'text-neutral-foreground',
                 )}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -114,7 +106,7 @@ export const Header: React.FC = () => {
                   setIsMobileMenuOpen(false);
                   handleLogout();
                 }}
-                className="text-left text-lg font-medium text-zinc-400 hover:text-white transition-colors flex items-center gap-2"
+                className="text-left text-lg font-medium text-neutral-foreground hover:text-foreground transition-colors flex items-center gap-2"
               >
                 <LogOut size={18} />
                 Logout

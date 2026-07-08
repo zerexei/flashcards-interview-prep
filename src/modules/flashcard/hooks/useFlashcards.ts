@@ -5,19 +5,20 @@ import { flashcardService } from '../services/flashcardService';
 export const useFlashcards = () => {
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   const fetchCards = useCallback(async (onlyActive = false) => {
     setLoading(true);
     setError(null);
     try {
-      const data = onlyActive 
+      const data = onlyActive
         ? await flashcardService.getActiveFlashcards()
         : await flashcardService.getFlashcards();
       setCards(data);
     } catch (err) {
-      setError('Failed to fetch flashcards');
-      console.error(err);
+      const error = err instanceof Error ? err : new Error('Failed to fetch flashcards');
+      setError(error);
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -29,9 +30,10 @@ export const useFlashcards = () => {
       await flashcardService.createFlashcard(card);
       await fetchCards();
     } catch (err) {
-      setError('Failed to create flashcard');
-      console.error(err);
-      throw err;
+      const error = err instanceof Error ? err : new Error('Failed to create flashcard');
+      setError(error);
+      console.error(error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -43,9 +45,10 @@ export const useFlashcards = () => {
       await flashcardService.updateFlashcard(id, card);
       setCards(prev => prev.map(c => c.id === id ? { ...c, ...card } : c));
     } catch (err) {
-      setError('Failed to update flashcard');
-      console.error(err);
-      throw err;
+      const error = err instanceof Error ? err : new Error('Failed to update flashcard');
+      setError(error);
+      console.error(error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -57,17 +60,17 @@ export const useFlashcards = () => {
       await flashcardService.deleteFlashcard(id);
       setCards(prev => prev.filter(c => c.id !== id));
     } catch (err) {
-      setError('Failed to delete flashcard');
-      console.error(err);
-      throw err;
+      const error = err instanceof Error ? err : new Error('Failed to delete flashcard');
+      setError(error);
+      console.error(error);
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleActive = async (id: string, currentState: boolean) => {
-    await updateCard(id, { isActive: !currentState });
-  };
+  const toggleActive = (id: string, currentState: boolean) =>
+    updateCard(id, { isActive: !currentState });
 
   return {
     cards,
@@ -77,6 +80,6 @@ export const useFlashcards = () => {
     createCard,
     updateCard,
     deleteCard,
-    toggleActive
+    toggleActive,
   };
 };

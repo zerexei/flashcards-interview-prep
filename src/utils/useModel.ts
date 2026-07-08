@@ -29,7 +29,7 @@ export function useModel() {
             return text;
         } catch (err) {
             setError(err as Error);
-            console.log(err)
+            console.error(err);
             return "";
         } finally {
             setLoading(false);

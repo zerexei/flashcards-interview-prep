@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { auth, googleProvider } from '@/utils/database';
-import { 
-  signInWithPopup, 
-  signInWithEmailAndPassword, 
+import {
+  signInWithPopup,
+  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  updateProfile
+  updateProfile,
 } from 'firebase/auth';
 import { Section } from '@/components/common/Section';
-import { cn } from '@/utils/cn';
-import { Mail, Lock, User, Github, Chrome, Loader2, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User, Chrome, Loader2, ArrowRight } from 'lucide-react';
 import ROUTES from '@/routes';
 
 const AuthPage = () => {
@@ -27,8 +26,8 @@ const AuthPage = () => {
     try {
       await signInWithPopup(auth, googleProvider);
       navigate(ROUTES.flashcards.path);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Google sign-in failed.');
     } finally {
       setLoading(false);
     }
@@ -48,8 +47,8 @@ const AuthPage = () => {
         }
       }
       navigate(ROUTES.flashcards.path);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Authentication failed.');
     } finally {
       setLoading(false);
     }
@@ -59,90 +58,94 @@ const AuthPage = () => {
     <Section className="min-h-screen flex items-center justify-center py-20">
       <div className="w-full max-w-md px-6 animate-fade-in">
         <div className="text-center space-y-4 mb-10">
-          <h1 className="text-4xl font-bold tracking-tight text-white">
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">
             {isLogin ? 'Welcome Back' : 'Join the Lab'}
           </h1>
-          <p className="text-zinc-400">
-            {isLogin ? 'Log in to access your technical cards.' : 'Create an account to start your learning journey.'}
+          <p className="text-neutral-foreground">
+            {isLogin
+              ? 'Log in to access your technical cards.'
+              : 'Create an account to start your learning journey.'}
           </p>
         </div>
 
-        <div className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-3xl p-8 shadow-2xl space-y-8">
-          {/* Social Sign In */}
-          <div className="space-y-4">
-            <button
-              onClick={handleGoogleSignIn}
-              className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl text-white font-medium transition-all duration-200"
-            >
-              <Chrome size={20} className="text-accent" />
-              Continue with Google
-            </button>
-          </div>
+        <div className="card p-8 space-y-8">
+          {/* Social Sign-in */}
+          <button
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="w-full button button-secondary gap-3"
+          >
+            <Chrome size={20} className="text-primary" />
+            Continue with Google
+          </button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-zinc-800"></span>
+              <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#0a0a0a] px-2 text-zinc-500 font-bold">Or continue with email</span>
+              <span className="bg-card px-2 text-neutral-foreground font-bold tracking-widest">
+                Or continue with email
+              </span>
             </div>
           </div>
 
           {/* Form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
             {error && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-500 text-xs font-medium text-center">
+              <div className="p-3 badge badge-danger w-full text-center justify-center rounded-lg">
                 {error}
               </div>
             )}
 
             {!isLogin && (
-              <div className="space-y-1">
+              <div className="form-group">
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-foreground" size={18} />
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Full Name"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-accent/50 transition-colors"
+                    className="form-input pl-10"
                     required={!isLogin}
                   />
                 </div>
               </div>
             )}
 
-            <div className="space-y-1">
+            <div className="form-group">
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-foreground" size={18} />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email Address"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-accent/50 transition-colors"
+                  className="form-input pl-10"
                   required
                 />
               </div>
             </div>
 
-            <div className="space-y-1">
+            <div className="form-group">
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-foreground" size={18} />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-accent/50 transition-colors"
+                  className="form-input pl-10"
                   required
                 />
               </div>
             </div>
 
             <button
+              type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-accent hover:bg-accent/90 text-white rounded-xl font-bold transition-all duration-200 shadow-[0_0_20px_rgba(255,45,32,0.1)]"
+              className="w-full button button-primary button-lg gap-2"
             >
               {loading ? (
                 <Loader2 size={20} className="animate-spin" />
@@ -158,12 +161,12 @@ const AuthPage = () => {
           <div className="text-center">
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-zinc-500 hover:text-white transition-colors"
+              className="button button-link text-sm"
             >
               {isLogin ? (
-                <>Don't have an account? <span className="text-accent font-bold">Sign up</span></>
+                <>Don&apos;t have an account? <span className="text-primary font-bold">Sign up</span></>
               ) : (
-                <>Already have an account? <span className="text-accent font-bold">Log in</span></>
+                <>Already have an account? <span className="text-primary font-bold">Log in</span></>
               )}
             </button>
           </div>

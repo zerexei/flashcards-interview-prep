@@ -1,70 +1,63 @@
-import { useEffect } from "react";
-import { Routes, Route, useLocation, Outlet, Navigate } from "react-router-dom";
-import { useAuth } from "@/utils/useAuth";
-import { Layout } from "@/components/layout/Layout";
-import Login from "@/pages/Auth/Login";
-import { FlashcardGamePage } from "@/modules/flashcard/game/FlashcardGamePage";
-import { FlashcardAdminPage } from "@/modules/flashcard/admin/FlashcardAdminPage";
-
-import ROUTES from "@/routes";
-
-const ADMIN_UID = import.meta.env.VITE_FIREBASE_ADMIN_UID;
+import { useEffect } from 'react';
+import { Routes, Route, useLocation, Outlet, Navigate } from 'react-router-dom';
+import { useAuthContext } from '@/context/AuthContext';
+import { Layout } from '@/components/layout/Layout';
+import Login from '@/pages/Auth/Login';
+import { FlashcardGamePage } from '@/modules/flashcard/game/FlashcardGamePage';
+import { FlashcardAdminPage } from '@/modules/flashcard/admin/FlashcardAdminPage';
+import ROUTES from '@/routes';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
-
   return null;
 };
 
-function App() {
-  const auth = useAuth();
+// Defined outside App to avoid re-creation on every render.
+const ProtectedRoute = ({ isAuth }: { isAuth: boolean }) =>
+  isAuth ? <Outlet /> : <Navigate to={ROUTES.login.path} replace />;
 
-  if (auth.loading)
+const AdminRoute = ({ isAuth, isAdmin }: { isAuth: boolean; isAdmin: boolean }) => {
+  if (!isAuth) return <Navigate to={ROUTES.login.path} replace />;
+  if (!isAdmin) return <Navigate to={ROUTES.flashcards.path} replace />;
+  return <Outlet />;
+};
+
+const LoginRoute = ({ isAuth }: { isAuth: boolean }) =>
+  isAuth ? <Navigate to={ROUTES.flashcards.path} replace /> : <Login />;
+
+function App() {
+  const { isAuth, isAdmin, loading } = useAuthContext();
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
         Loading...
       </div>
     );
-
-  const ProtectedRoute = ({ isAuth }: { isAuth: boolean }) => {
-    return isAuth ? <Outlet /> : <Navigate to={ROUTES.login.path} replace />;
-  };
-
-  const AdminRoute = ({ isAuth, uid }: { isAuth: boolean; uid?: string }) => {
-    if (!isAuth) return <Navigate to={ROUTES.login.path} replace />;
-    if (uid !== ADMIN_UID) return <Navigate to={ROUTES.flashcards.path} replace />;
-    return <Outlet />;
-  };
+  }
 
   return (
     <>
       <ScrollToTop />
       <Routes>
         <Route path={ROUTES.home.path} element={<Layout />}>
-          {/* Redirect index path / to /flash-cards */}
+          {/* Redirect / to /flash-cards */}
           <Route index element={<Navigate to={ROUTES.flashcards.path} replace />} />
-          <Route path={ROUTES.login.path} element={<Login />} />
 
-          {/* Authenticated Routes */}
-          <Route element={<ProtectedRoute isAuth={auth.isAuth} />}>
-            <Route
-              path={ROUTES.flashcards.path}
-              element={<FlashcardGamePage />}
-            />
+          {/* Redirect authenticated users away from /login */}
+          <Route path={ROUTES.login.path} element={<LoginRoute isAuth={isAuth} />} />
+
+          {/* Authenticated routes */}
+          <Route element={<ProtectedRoute isAuth={isAuth} />}>
+            <Route path={ROUTES.flashcards.path} element={<FlashcardGamePage />} />
           </Route>
 
-          {/* Admin Routes */}
-          <Route
-            element={<AdminRoute isAuth={auth.isAuth} uid={auth.user?.uid} />}
-          >
-            <Route
-              path={ROUTES.admin.flashcards.path}
-              element={<FlashcardAdminPage />}
-            />
+          {/* Admin routes */}
+          <Route element={<AdminRoute isAuth={isAuth} isAdmin={isAdmin} />}>
+            <Route path={ROUTES.admin.flashcards.path} element={<FlashcardAdminPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to={ROUTES.home.path} replace />} />

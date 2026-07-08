@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Section } from "@/components/common/Section";
-import { useAuth } from "@/utils/useAuth";
-import { cn } from "@/utils/cn";
+import React, { useState, useEffect, useMemo } from 'react';
+import { Section } from '@/components/common/Section';
+import { useAuthContext } from '@/context/AuthContext';
+import { cn } from '@/utils/cn';
 import {
   ChevronRight,
   RotateCcw,
@@ -12,15 +12,22 @@ import {
   Loader2,
   Sparkles,
   ShieldCheck,
-} from "lucide-react";
-import { useFlashcards } from "../hooks/useFlashcards";
-import { Flashcard, TAG_CATEGORIES } from "../types/flashcard.types";
-import { Link } from "react-router-dom";
-import { useModel } from "@/utils/useModel";
-import ROUTES from "@/routes";
+} from 'lucide-react';
+import { useFlashcards } from '../hooks/useFlashcards';
+import { Flashcard, TAG_CATEGORIES } from '../types/flashcard.types';
+import { Link } from 'react-router-dom';
+import { useModel } from '@/utils/useModel';
+import ROUTES from '@/routes';
+
+interface AiEvaluationResult {
+  score: number;
+  correct: string[];
+  missing: string[];
+  suggestion: string;
+}
 
 export const FlashcardGamePage: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin } = useAuthContext();
 
   const { cards, loading, fetchCards } = useFlashcards();
   const [currentCard, setCurrentCard] = useState<Flashcard | null>(null);
@@ -29,72 +36,60 @@ export const FlashcardGamePage: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  // Deep Mode State
+  // Deep Mode — persisted to localStorage
   const [isDeepMode, setIsDeepMode] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("deepMode") === "true";
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('deepMode') === 'true';
   });
-  const [userAnswer, setUserAnswer] = useState("");
-  const [aiResponse, setAiResponse] = useState<{
-    score: number;
-    correct: string[];
-    missing: string[];
-    suggestion: string;
-  } | null>(null);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [aiResponse, setAiResponse] = useState<AiEvaluationResult | null>(null);
+
+  const model = useModel();
 
   useEffect(() => {
     fetchCards(true); // Only active cards
   }, [fetchCards]);
 
   useEffect(() => {
-    localStorage.setItem("deepMode", String(isDeepMode));
+    localStorage.setItem('deepMode', String(isDeepMode));
   }, [isDeepMode]);
 
-  const filteredCards = useMemo(() => {
-    return selectedTags.length > 0
-      ? cards.filter((card) =>
-          card.tags.some((tag) => selectedTags.includes(tag)),
-        )
-      : cards;
-  }, [cards, selectedTags]);
+  const filteredCards = useMemo(
+    () =>
+      selectedTags.length > 0
+        ? cards.filter(card => card.tags.some(tag => selectedTags.includes(tag)))
+        : cards,
+    [cards, selectedTags],
+  );
 
-  const getRandomCard = () => {
+  const getRandomCard = (): Flashcard | null => {
     if (filteredCards.length === 0) return null;
     if (filteredCards.length === 1) return filteredCards[0];
 
-    let nextCard: Flashcard;
-    do {
-      const randomIndex = Math.floor(Math.random() * filteredCards.length);
-      nextCard = filteredCards[randomIndex];
-    } while (
-      currentCard &&
-      nextCard.id === currentCard.id &&
-      filteredCards.length > 1
-    );
+    // Avoid repeating the same card back-to-back
+    const pool = currentCard
+      ? filteredCards.filter(c => c.id !== currentCard.id)
+      : filteredCards;
 
-    return nextCard;
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
+
+  const resetCardState = () => {
+    setIsRevealed(false);
+    setUserAnswer('');
+    setAiResponse(null);
   };
 
   const handleStart = () => {
-    const card = getRandomCard();
-    setCurrentCard(card);
+    setCurrentCard(getRandomCard());
     setHasStarted(true);
     resetCardState();
   };
 
   const handleNext = () => {
-    const card = getRandomCard();
-    setCurrentCard(card);
+    setCurrentCard(getRandomCard());
     resetCardState();
   };
-
-  const resetCardState = () => {
-    setIsRevealed(false);
-    setUserAnswer("");
-    setAiResponse(null);
-  };
-
-  const model = useModel();
 
   const aiValidation = async () => {
     if (!userAnswer.trim() || !currentCard) return;
@@ -108,7 +103,7 @@ export const FlashcardGamePage: React.FC = () => {
       User's Answer: ${userAnswer}
       Card Type: ${currentCard.cardType}
       Difficulty: ${currentCard.difficulty}
-      Tags: ${currentCard.tags.join(", ")}
+      Tags: ${currentCard.tags.join(', ')}
 
       Return a JSON object in this format:
       {
@@ -122,30 +117,29 @@ export const FlashcardGamePage: React.FC = () => {
 
     try {
       const response = await model.generate(prompt);
+      const cleanJson = response.replace(/```json|```/g, '').trim();
+      const result = JSON.parse(cleanJson) as AiEvaluationResult;
 
-      // Clean and parse response
-      const cleanJson = response.replace(/```json|```/g, "").trim();
-      const result = JSON.parse(cleanJson);
-
-      if (result.score && result.suggestion) {
+      // Use != null to correctly handle a score of 0
+      if (result.score != null && result.suggestion) {
         setAiResponse(result);
         setIsRevealed(true);
       }
     } catch (err) {
-      console.error("AI evaluation failed:", err);
+      console.error('AI evaluation failed:', err);
     }
   };
 
   const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
     );
   };
 
   if (loading && cards.length === 0) {
     return (
       <Section className="min-h-[80vh] flex items-center justify-center">
-        <Loader2 className="animate-spin text-accent" size={48} />
+        <Loader2 className="animate-spin text-primary" size={48} />
       </Section>
     );
   }
@@ -161,10 +155,8 @@ export const FlashcardGamePage: React.FC = () => {
           <button
             onClick={() => setIsSettingsOpen(!isSettingsOpen)}
             className={cn(
-              "p-2 rounded-xl border transition-all duration-300",
-              isSettingsOpen
-                ? "bg-accent border-accent text-white"
-                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700",
+              'button button-sm',
+              isSettingsOpen ? 'button-primary' : 'button-secondary',
             )}
           >
             <Brain size={20} />
@@ -173,46 +165,44 @@ export const FlashcardGamePage: React.FC = () => {
 
         {/* Filter Panel */}
         {isSettingsOpen && (
-          <div className="absolute top-0 right-6 w-full max-w-sm p-6 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800 rounded-3xl animate-slide-up space-y-6 z-[60] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-accent/20">
+          <div className="absolute top-0 right-6 w-full max-w-sm p-6 card rounded-3xl animate-slide-up space-y-6 z-60 shadow-xl border-primary/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Brain size={16} className="text-accent" />
-                <h3 className="text-xs font-bold text-white uppercase tracking-widest">
+                <Brain size={16} className="text-primary" />
+                <h3 className="text-xs font-bold text-foreground uppercase tracking-widest">
                   Study Filters
                 </h3>
               </div>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setSelectedTags([])}
-                  className="text-[10px] text-zinc-500 hover:text-white uppercase tracking-widest font-bold transition-colors"
+                  className="button button-link text-[10px] uppercase tracking-widest font-bold"
                 >
                   Clear
                 </button>
                 <button
                   onClick={() => setIsSettingsOpen(false)}
-                  className="text-[10px] text-zinc-500 hover:text-white uppercase tracking-widest font-bold transition-colors"
+                  className="button button-link text-[10px] uppercase tracking-widest font-bold"
                 >
                   Close
                 </button>
               </div>
             </div>
 
-            <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-zinc-800">
+            <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
               {Object.entries(TAG_CATEGORIES).map(([category, tags]) => (
                 <div key={category} className="space-y-3">
-                  <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-zinc-800 pb-1">
+                  <h4 className="text-[10px] font-bold text-neutral-foreground uppercase tracking-widest border-b border-border pb-1">
                     {category}
                   </h4>
                   <div className="flex flex-wrap gap-2">
-                    {tags.map((tag) => (
+                    {tags.map(tag => (
                       <button
                         key={tag}
                         onClick={() => toggleTag(tag)}
                         className={cn(
-                          "px-2.5 py-1.5 text-[9px] font-bold rounded-lg border transition-all duration-200",
-                          selectedTags.includes(tag)
-                            ? "bg-accent/20 border-accent text-accent"
-                            : "bg-zinc-800/50 border-zinc-700/50 text-zinc-400 hover:border-zinc-600",
+                          'badge transition-all duration-200',
+                          selectedTags.includes(tag) ? 'badge-info' : 'hover:border-primary/50',
                         )}
                       >
                         {tag}
@@ -228,17 +218,17 @@ export const FlashcardGamePage: React.FC = () => {
         {!hasStarted ? (
           <div className="text-center space-y-8 animate-fade-in">
             <div className="space-y-4">
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white">
-                Technical <span className="text-accent">Flashcards</span>
+              <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground">
+                Technical <span className="text-primary">Flashcards</span>
               </h1>
-              <p className="text-zinc-400 text-lg max-w-md mx-auto">
+              <p className="text-neutral-foreground text-lg max-w-md mx-auto">
                 Test your knowledge with these quick technical questions.
                 Powered by your personalized collection.
               </p>
             </div>
             <button
               onClick={handleStart}
-              className="inline-flex items-center justify-center px-10 py-4 text-lg font-bold text-white bg-accent rounded-full hover:bg-accent/90 transition-all duration-300 shadow-[0_0_20px_rgba(255,45,32,0.2)] hover:shadow-[0_0_30px_rgba(255,45,32,0.4)] hover:-translate-y-1"
+              className="button button-primary button-lg rounded-full px-10"
             >
               Start Session
             </button>
@@ -246,45 +236,42 @@ export const FlashcardGamePage: React.FC = () => {
         ) : (
           <div className="space-y-8 animate-fade-in">
             {/* Deep Mode Toggle */}
-            <div className="flex justify-end ">
+            <div className="flex justify-end">
               <button
                 onClick={() => setIsDeepMode(!isDeepMode)}
                 disabled={!isAdmin}
-                title={isAdmin ? "AI Evaluation" : "Admin only"}
+                title={isAdmin ? 'AI Evaluation' : 'Admin only'}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-300 text-xs font-bold uppercase tracking-wider",
-                  isDeepMode
-                    ? "bg-accent/10 border-accent text-accent shadow-[0_0_15px_rgba(255,45,32,0.1)]"
-                    : "bg-zinc-900 border-zinc-800 text-zinc-500 enabled:hover:border-zinc-700 disabled:cursor-not-allowed",
+                  'button button-sm gap-2 uppercase tracking-wider',
+                  isDeepMode ? 'button-accent' : 'button-secondary',
+                  !isAdmin && 'cursor-not-allowed opacity-50',
                 )}
               >
                 <Brain size={14} />
-                Deep Mode {isDeepMode ? "On" : "Off"}
+                Deep Mode {isDeepMode ? 'On' : 'Off'}
               </button>
             </div>
 
             {/* Card UI */}
             <div
               className={cn(
-                "relative min-h-[350px] w-full p-8 md:p-12 rounded-3xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm flex flex-col justify-center transition-all duration-500",
-                isRevealed || aiResponse
-                  ? "border-accent/30 shadow-[0_0_40px_rgba(255,45,32,0.05)]"
-                  : "",
+                'card relative min-h-[350px] w-full p-8 md:p-12 rounded-3xl flex flex-col justify-center transition-all duration-500',
+                (isRevealed || aiResponse) && 'border-primary/30',
               )}
             >
-              <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-4 text-[10px] uppercase tracking-widest font-bold text-zinc-500">
+              <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-4 text-[10px] uppercase tracking-widest font-bold text-neutral-foreground">
                 <span className="flex items-center gap-1">
-                  <Award size={12} className="text-accent" />
+                  <Award size={12} className="text-primary" />
                   Difficulty: {currentCard?.difficulty}/5
                 </span>
               </div>
 
               <div className="space-y-6 text-center">
                 <div className="space-y-2">
-                  <p className="text-xs uppercase tracking-widest text-accent font-bold">
+                  <p className="text-xs uppercase tracking-widest text-primary font-bold">
                     {currentCard?.questionPrompt}
                   </p>
-                  <h2 className="text-2xl md:text-3xl font-medium text-white leading-tight">
+                  <h2 className="text-2xl md:text-3xl font-medium text-foreground leading-tight">
                     {currentCard?.question}
                   </h2>
                 </div>
@@ -294,19 +281,19 @@ export const FlashcardGamePage: React.FC = () => {
                   <div className="pt-4 space-y-4 animate-slide-up">
                     <textarea
                       value={userAnswer}
-                      onChange={(e) => setUserAnswer(e.target.value)}
-                      placeholder="Type your answer here..."
-                      className="w-full h-32 bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-zinc-300 text-sm focus:outline-none focus:border-accent/50 transition-colors resize-none"
+                      onChange={e => setUserAnswer(e.target.value)}
+                      placeholder="Type your answer here…"
+                      className="form-textarea h-32 resize-none"
                     />
                     <button
                       onClick={aiValidation}
                       disabled={!userAnswer.trim() || model.loading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-black rounded-xl font-bold text-sm hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full button button-secondary gap-2"
                     >
                       {model.loading ? (
                         <>
                           <Loader2 size={16} className="animate-spin" />
-                          Evaluating your answer...
+                          Evaluating your answer…
                         </>
                       ) : (
                         <>
@@ -317,7 +304,7 @@ export const FlashcardGamePage: React.FC = () => {
                     </button>
 
                     {model.error && (
-                      <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs text-center animate-shake">
+                      <div className="badge badge-danger w-full justify-center rounded-xl py-3">
                         Something went wrong. Please try again.
                       </div>
                     )}
@@ -326,35 +313,33 @@ export const FlashcardGamePage: React.FC = () => {
 
                 {/* AI Response Display */}
                 {aiResponse && (
-                  <div className="pt-8 border-t border-zinc-800 text-left space-y-6 animate-slide-up">
+                  <div className="pt-8 border-t border-border text-left space-y-6 animate-slide-up">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-accent font-bold">
+                      <div className="flex items-center gap-2 text-primary font-bold">
                         <Sparkles size={18} />
-                        <span className="uppercase tracking-widest text-xs">
-                          AI Evaluation
-                        </span>
+                        <span className="uppercase tracking-widest text-xs">AI Evaluation</span>
                       </div>
-                      <div className="text-2xl font-bold text-white">
+                      <div className="text-2xl font-bold text-foreground">
                         Score: {aiResponse.score}/5
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-widest">
-                          What's correct:
+                        <h4 className="text-xs font-bold text-success uppercase tracking-widest">
+                          What&apos;s correct:
                         </h4>
-                        <ul className="text-sm text-zinc-400 space-y-1 list-disc pl-4">
+                        <ul className="text-sm text-neutral-foreground space-y-1 list-disc pl-4">
                           {aiResponse.correct.map((item, i) => (
                             <li key={i}>{item}</li>
                           ))}
                         </ul>
                       </div>
                       <div className="space-y-2">
-                        <h4 className="text-xs font-bold text-rose-400 uppercase tracking-widest">
-                          What's missing:
+                        <h4 className="text-xs font-bold text-danger uppercase tracking-widest">
+                          What&apos;s missing:
                         </h4>
-                        <ul className="text-sm text-zinc-400 space-y-1 list-disc pl-4">
+                        <ul className="text-sm text-neutral-foreground space-y-1 list-disc pl-4">
                           {aiResponse.missing.map((item, i) => (
                             <li key={i}>{item}</li>
                           ))}
@@ -362,12 +347,12 @@ export const FlashcardGamePage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="p-4 bg-accent/5 border border-accent/10 rounded-xl">
-                      <h4 className="text-xs font-bold text-accent uppercase tracking-widest mb-1">
+                    <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl">
+                      <h4 className="text-xs font-bold text-primary uppercase tracking-widest mb-1">
                         Suggestion:
                       </h4>
-                      <p className="text-sm text-zinc-300 italic">
-                        "{aiResponse.suggestion}"
+                      <p className="text-sm text-neutral-foreground italic">
+                        &ldquo;{aiResponse.suggestion}&rdquo;
                       </p>
                     </div>
                   </div>
@@ -375,20 +360,18 @@ export const FlashcardGamePage: React.FC = () => {
 
                 {/* Fixed Answer Reveal */}
                 {isRevealed && !aiResponse && (
-                  <div className="pt-8 border-t border-zinc-800 animate-slide-up">
-                    <p className="text-zinc-300 text-lg leading-relaxed">
+                  <div className="pt-8 border-t border-border animate-slide-up">
+                    <p className="text-foreground text-lg leading-relaxed">
                       {currentCard?.fixedAnswer}
                     </p>
                   </div>
                 )}
               </div>
 
+              {/* Tags */}
               <div className="absolute bottom-3 left-0 right-0 px-8 flex flex-wrap justify-center gap-2">
-                {currentCard?.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 text-[10px] bg-zinc-800 text-zinc-400 rounded-full flex items-center gap-1 border border-zinc-700/50"
-                  >
+                {currentCard?.tags.map(tag => (
+                  <span key={tag} className="badge flex items-center gap-1">
                     <Tag size={10} />
                     {tag}
                   </span>
@@ -401,7 +384,7 @@ export const FlashcardGamePage: React.FC = () => {
               {!isRevealed && !aiResponse && !isDeepMode && (
                 <button
                   onClick={() => setIsRevealed(true)}
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-sm font-bold text-white bg-zinc-800 border border-zinc-700 rounded-2xl hover:bg-zinc-700 transition-all duration-200"
+                  className="w-full sm:w-auto button button-secondary button-lg"
                 >
                   Reveal Answer
                 </button>
@@ -410,7 +393,7 @@ export const FlashcardGamePage: React.FC = () => {
               {(isRevealed || aiResponse) && (
                 <button
                   onClick={handleNext}
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 text-sm font-bold text-white bg-accent rounded-2xl hover:bg-accent/90 transition-all duration-200 group"
+                  className="w-full sm:w-auto button button-primary button-lg group"
                 >
                   Next Card
                   <ChevronRight
@@ -425,7 +408,7 @@ export const FlashcardGamePage: React.FC = () => {
                   setHasStarted(false);
                   resetCardState();
                 }}
-                className="text-zinc-500 hover:text-white transition-colors flex items-center gap-2 text-sm font-medium"
+                className="button button-ghost button-sm gap-2"
               >
                 <RotateCcw size={14} />
                 Reset session
@@ -434,24 +417,24 @@ export const FlashcardGamePage: React.FC = () => {
           </div>
         )}
 
-        {/* Admin entry UI */}
+        {/* Admin Entry */}
         {isAdmin && (
-          <div className="mt-20 pt-8 border-t border-zinc-800/50 flex justify-center animate-fade-in">
+          <div className="mt-20 pt-8 border-t border-border flex justify-center animate-fade-in">
             <Link
               to={ROUTES.admin.flashcards.path}
-              className="group flex items-center gap-3 px-6 py-3 bg-zinc-900/50 hover:bg-zinc-900 border border-zinc-800 hover:border-accent/30 rounded-2xl transition-all duration-300"
+              className="card group flex items-center gap-3 px-6 py-3 rounded-2xl hover:border-primary/30 transition-all duration-300"
             >
-              <div className="p-2 bg-zinc-800 group-hover:bg-accent/10 rounded-lg transition-colors">
+              <div className="p-2 bg-neutral group-hover:bg-primary/10 rounded-lg transition-colors">
                 <ShieldCheck
                   size={18}
-                  className="text-zinc-400 group-hover:text-accent"
+                  className="text-neutral-foreground group-hover:text-primary transition-colors"
                 />
               </div>
               <div className="text-left">
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none mb-1">
+                <p className="text-[10px] font-bold text-neutral-foreground uppercase tracking-widest leading-none mb-1">
                   Administrator
                 </p>
-                <p className="text-sm font-bold text-white group-hover:text-accent transition-colors">
+                <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
                   Manage Cards →
                 </p>
               </div>
