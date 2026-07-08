@@ -149,28 +149,54 @@ export const FlashcardGamePage: React.FC = () => {
       id="flashcards"
       className="min-h-[80vh] flex flex-col items-center justify-center max-w-3xl"
     >
-      <div className="w-full relative">
-        {/* Settings Toggle */}
-        <div className="absolute -top-12 right-6 flex items-center gap-4">
-          <button
-            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-            className={cn(
-              'button button-sm',
-              isSettingsOpen ? 'button-primary' : 'button-secondary',
-            )}
-          >
-            <Brain size={20} />
-          </button>
-        </div>
+      <div className="w-full space-y-6">
+        {/* Unified Session Controls Toolbar */}
+        {hasStarted && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
+            <div className="text-left">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                Study <span className="text-primary">Session</span>
+              </h1>
+              <p className="text-neutral-foreground text-xs">Test your computer science and engineering knowledge</p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                className={cn(
+                  'button button-sm gap-2',
+                  isSettingsOpen ? 'button-primary' : 'button-secondary',
+                )}
+              >
+                <Brain size={16} />
+                {isSettingsOpen ? 'Hide Filters' : 'Show Filters'}
+              </button>
 
-        {/* Filter Panel */}
-        {isSettingsOpen && (
-          <div className="absolute top-0 right-6 w-full max-w-sm p-6 card rounded-3xl animate-slide-up space-y-6 z-60 shadow-xl border-primary/20">
+              <button
+                onClick={() => setIsDeepMode(!isDeepMode)}
+                disabled={!isAuth}
+                title={isAuth ? 'Toggle AI Evaluation' : 'Log in to use AI Evaluation'}
+                className={cn(
+                  'button button-sm gap-2',
+                  isDeepMode ? 'button-accent' : 'button-secondary',
+                  !isAuth && 'cursor-not-allowed opacity-50',
+                )}
+              >
+                <Sparkles size={14} />
+                Deep Mode {isDeepMode ? 'On' : 'Off'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Filter Panel (Inline Collapsible) */}
+        {hasStarted && isSettingsOpen && (
+          <div className="card p-6 rounded-2xl animate-slide-up space-y-6 border-primary/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Brain size={16} className="text-primary" />
                 <h3 className="text-xs font-bold text-foreground uppercase tracking-widest">
-                  Study Filters
+                  Filter by Topic
                 </h3>
               </div>
               <div className="flex items-center gap-3">
@@ -178,18 +204,18 @@ export const FlashcardGamePage: React.FC = () => {
                   onClick={() => setSelectedTags([])}
                   className="button button-link text-[10px] uppercase tracking-widest font-bold"
                 >
-                  Clear
+                  Clear All
                 </button>
                 <button
                   onClick={() => setIsSettingsOpen(false)}
                   className="button button-link text-[10px] uppercase tracking-widest font-bold"
                 >
-                  Close
+                  Apply
                 </button>
               </div>
             </div>
 
-            <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[40vh] overflow-y-auto pr-2">
               {Object.entries(TAG_CATEGORIES).map(([category, tags]) => (
                 <div key={category} className="space-y-3">
                   <h4 className="text-[10px] font-bold text-neutral-foreground uppercase tracking-widest border-b border-border pb-1">
@@ -201,7 +227,7 @@ export const FlashcardGamePage: React.FC = () => {
                         key={tag}
                         onClick={() => toggleTag(tag)}
                         className={cn(
-                          'badge transition-all duration-200',
+                          'badge transition-all duration-200 cursor-pointer',
                           selectedTags.includes(tag) ? 'badge-info' : 'hover:border-primary/50',
                         )}
                       >
@@ -217,13 +243,12 @@ export const FlashcardGamePage: React.FC = () => {
 
         {!hasStarted ? (
           <div className="text-center space-y-8 animate-fade-in">
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground">
+            <div className="space-y-3">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
                 Technical <span className="text-primary">Flashcards</span>
               </h1>
-              <p className="text-neutral-foreground text-lg max-w-md mx-auto">
-                Test your knowledge with these quick technical questions.
-                Powered by your personalized collection.
+              <p className="text-neutral-foreground text-sm max-w-sm mx-auto">
+                Test your knowledge with quick technical questions.
               </p>
             </div>
             <button
@@ -235,22 +260,6 @@ export const FlashcardGamePage: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-8 animate-fade-in">
-            {/* Deep Mode Toggle */}
-            <div className="flex justify-end">
-              <button
-                onClick={() => setIsDeepMode(!isDeepMode)}
-                disabled={!isAuth}
-                title={isAuth ? 'AI Evaluation' : 'Log in to use AI Evaluation'}
-                className={cn(
-                  'button button-sm gap-2 uppercase tracking-wider',
-                  isDeepMode ? 'button-accent' : 'button-secondary',
-                  !isAuth && 'cursor-not-allowed opacity-50',
-                )}
-              >
-                <Brain size={14} />
-                Deep Mode {isDeepMode ? 'On' : 'Off'}
-              </button>
-            </div>
 
             {/* Card UI */}
             <div
@@ -419,25 +428,14 @@ export const FlashcardGamePage: React.FC = () => {
 
         {/* Admin Entry */}
         {isAdmin && (
-          <div className="mt-20 pt-8 border-t border-border flex justify-center animate-fade-in">
+          <div className="mt-16 pt-6 border-t border-border flex justify-center animate-fade-in">
             <Link
               to={ROUTES.admin.flashcards.path}
-              className="card group flex items-center gap-3 px-6 py-3 rounded-2xl hover:border-primary/30 transition-all duration-300"
+              className="group flex items-center gap-2 text-xs font-bold text-neutral-foreground hover:text-primary transition-colors uppercase tracking-wider"
             >
-              <div className="p-2 bg-neutral group-hover:bg-primary/10 rounded-lg transition-colors">
-                <ShieldCheck
-                  size={18}
-                  className="text-neutral-foreground group-hover:text-primary transition-colors"
-                />
-              </div>
-              <div className="text-left">
-                <p className="text-[10px] font-bold text-neutral-foreground uppercase tracking-widest leading-none mb-1">
-                  Administrator
-                </p>
-                <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                  Manage Cards →
-                </p>
-              </div>
+              <ShieldCheck size={14} />
+              Manage Cards
+              <span className="transform group-hover:translate-x-1 transition-transform">→</span>
             </Link>
           </div>
         )}

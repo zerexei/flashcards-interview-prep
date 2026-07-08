@@ -67,25 +67,25 @@ export const FlashcardAdminPage: React.FC = () => {
   });
 
   return (
-    <Section id="admin-cards" className="min-h-screen max-w-6xl">
-      <div className="w-full space-y-8">
+    <Section id="admin-cards" className="max-w-6xl min-h-screen">
+      <div className="space-y-8 w-full">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex flex-col gap-6 justify-between md:flex-row md:items-center">
           <div className="space-y-1">
             <button
               onClick={() => navigate(ROUTES.flashcards.path)}
-              className="button button-ghost button-sm gap-2 mb-4"
+              className="gap-2 mb-4 button button-ghost button-sm"
             >
               <ChevronLeft size={14} />
               Back to Game
             </button>
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
               Card <span className="text-primary">Management</span>
             </h1>
-            <p className="text-neutral-foreground text-sm">Manage your technical flashcard collection</p>
+            <p className="text-sm text-neutral-foreground">Manage your technical flashcard collection</p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+          <div className="flex flex-wrap gap-4 items-center w-full md:w-auto">
             {/* Search Input */}
             <div className="relative flex-1 md:flex-initial">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-foreground" size={16} />
@@ -94,7 +94,7 @@ export const FlashcardAdminPage: React.FC = () => {
                 placeholder="Search cards or tags…"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="form-input pl-10 w-full md:w-56"
+                className="pl-10 w-full form-input md:w-56"
               />
             </div>
 
@@ -102,7 +102,7 @@ export const FlashcardAdminPage: React.FC = () => {
             <select
               value={filterDifficulty}
               onChange={e => setFilterDifficulty(e.target.value)}
-              className="form-select w-full md:w-32"
+              className="w-full form-select md:w-32"
             >
               <option value="all">Difficulty: All</option>
               <option value="1">Difficulty: 1</option>
@@ -116,7 +116,7 @@ export const FlashcardAdminPage: React.FC = () => {
             <select
               value={filterCardType}
               onChange={e => setFilterCardType(e.target.value)}
-              className="form-select w-full md:w-36"
+              className="w-full form-select md:w-36"
             >
               <option value="all">Type: All</option>
               <option value="recall">Recall</option>
@@ -129,7 +129,7 @@ export const FlashcardAdminPage: React.FC = () => {
             <select
               value={filterActive}
               onChange={e => setFilterActive(e.target.value)}
-              className="form-select w-full md:w-32"
+              className="w-full form-select md:w-32"
             >
               <option value="all">Status: All</option>
               <option value="active">Active Only</option>
@@ -151,7 +151,7 @@ export const FlashcardAdminPage: React.FC = () => {
 
         {/* Card List */}
         {loading && cards.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
+          <div className="flex justify-center items-center py-20">
             <Loader2 className="animate-spin text-primary" size={40} />
           </div>
         ) : (
@@ -159,10 +159,11 @@ export const FlashcardAdminPage: React.FC = () => {
             {filteredCards.map(card => (
               <div
                 key={card.id}
-                className="card group p-6 hover:border-primary/30 transition-all duration-300"
+                className="p-6 transition-all duration-300 card group hover:border-primary/20"
               >
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                  <div className="space-y-4 flex-1">
+                <div className="flex flex-col gap-6 justify-between md:flex-row md:items-start">
+                  <div className="flex-1 space-y-4">
+                    {/* Badge Row */}
                     <div className="flex items-center gap-3">
                       <span className={cn(
                         'badge',
@@ -233,8 +234,8 @@ export const FlashcardAdminPage: React.FC = () => {
             ))}
 
             {filteredCards.length === 0 && !loading && (
-              <div className="text-center py-20 border-2 border-dashed border-border rounded-3xl">
-                <p className="text-neutral-foreground font-medium">
+              <div className="py-20 text-center rounded-3xl border-2 border-dashed border-border">
+                <p className="font-medium text-neutral-foreground">
                   No cards found matching your search.
                 </p>
               </div>
@@ -245,9 +246,9 @@ export const FlashcardAdminPage: React.FC = () => {
 
       {/* Overlay Form */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center p-6">
+        <div className="flex fixed inset-0 justify-center items-center p-6 z-100">
           <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            className="absolute inset-0 backdrop-blur-sm bg-black/80"
             onClick={() => setIsFormOpen(false)}
           />
           <div className="relative w-full max-w-2xl card p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
