@@ -15,6 +15,7 @@ import {
   Loader2,
   Search,
   ChevronLeft,
+  RotateCcw,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ROUTES from '@/routes';
@@ -85,24 +86,41 @@ export const FlashcardAdminPage: React.FC = () => {
             <p className="text-sm text-neutral-foreground">Manage your technical flashcard collection</p>
           </div>
 
-          <div className="flex flex-wrap gap-4 items-center w-full md:w-auto">
-            {/* Search Input */}
-            <div className="relative flex-1 md:flex-initial">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-foreground" size={16} />
-              <input
-                type="text"
-                placeholder="Search cards or tags…"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="pl-10 w-full form-input md:w-56"
-              />
-            </div>
+          <div className="flex items-center gap-3">
+            {/* Create Card Button */}
+            <button
+              onClick={() => {
+                setEditingCard(undefined);
+                setIsFormOpen(true);
+              }}
+              className="button button-primary gap-2"
+            >
+              <Plus size={20} />
+              Add Card
+            </button>
+          </div>
+        </div>
 
+        {/* Persistent Filters Bar */}
+        <div className="flex flex-col md:flex-row md:items-center gap-4 w-full">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-foreground" size={16} />
+            <input
+              type="text"
+              placeholder="Search cards or tags…"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-10 w-full form-input"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
             {/* Filter Difficulty */}
             <select
               value={filterDifficulty}
               onChange={e => setFilterDifficulty(e.target.value)}
-              className="w-full form-select md:w-32"
+              className="form-select flex-1 md:flex-initial md:w-36"
             >
               <option value="all">Difficulty: All</option>
               <option value="1">Difficulty: 1</option>
@@ -116,7 +134,7 @@ export const FlashcardAdminPage: React.FC = () => {
             <select
               value={filterCardType}
               onChange={e => setFilterCardType(e.target.value)}
-              className="w-full form-select md:w-36"
+              className="form-select flex-1 md:flex-initial md:w-36"
             >
               <option value="all">Type: All</option>
               <option value="recall">Recall</option>
@@ -129,23 +147,27 @@ export const FlashcardAdminPage: React.FC = () => {
             <select
               value={filterActive}
               onChange={e => setFilterActive(e.target.value)}
-              className="w-full form-select md:w-32"
+              className="form-select flex-1 md:flex-initial md:w-36"
             >
               <option value="all">Status: All</option>
               <option value="active">Active Only</option>
               <option value="inactive">Inactive Only</option>
             </select>
 
-            {/* Create Card Button */}
-            <button
-              onClick={() => {
-                setEditingCard(undefined);
-                setIsFormOpen(true);
-              }}
-              className="button button-primary p-2.5! w-full md:w-auto"
-            >
-              <Plus size={20} />
-            </button>
+            {/* Reset Filters */}
+            {(filterDifficulty !== 'all' || filterCardType !== 'all' || filterActive !== 'all') && (
+              <button
+                onClick={() => {
+                  setFilterDifficulty('all');
+                  setFilterCardType('all');
+                  setFilterActive('all');
+                }}
+                className="button button-sm button-secondary gap-2 w-full md:w-auto"
+                title="Reset Filters"
+              >
+                <RotateCcw size={14} />
+              </button>
+            )}
           </div>
         </div>
 
