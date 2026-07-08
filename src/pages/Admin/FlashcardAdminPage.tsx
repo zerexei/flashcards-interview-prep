@@ -181,41 +181,41 @@ export const FlashcardAdminPage: React.FC = () => {
             {filteredCards.map(card => (
               <div
                 key={card.id}
-                className="p-6 transition-all duration-300 card group hover:border-primary/20"
+                className="card group p-6 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
               >
                 <div className="flex flex-col gap-6 justify-between md:flex-row md:items-start">
                   <div className="flex-1 space-y-4">
                     {/* Badge Row */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <span className={cn(
-                        'badge',
-                        card.isActive ? 'badge-success' : '',
+                        'badge text-xs',
+                        card.isActive ? 'badge-success' : 'badge-danger',
                       )}>
                         {card.isActive ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
                         <span className="ml-1">{card.isActive ? 'Active' : 'Inactive'}</span>
                       </span>
                       <span className="text-[10px] font-bold text-neutral-foreground uppercase tracking-widest flex items-center gap-1">
-                        <Award size={10} />
+                        <Award size={11} className="text-primary" />
                         Diff: {card.difficulty}
                       </span>
-                      <span className="text-[10px] font-bold text-neutral-foreground uppercase tracking-widest">
+                      <span className="text-[10px] font-bold text-neutral-foreground uppercase tracking-widest font-mono bg-secondary px-2 py-0.5 rounded border border-border">
                         {card.cardType}
                       </span>
                     </div>
 
                     <div>
-                      <h3 className="text-foreground font-medium text-lg line-clamp-2 leading-snug">
+                      <h3 className="text-foreground font-semibold text-lg line-clamp-2 leading-snug">
                         {card.question}
                       </h3>
-                      <p className="text-neutral-foreground text-sm mt-2 line-clamp-1 italic">
+                      <p className="text-neutral-foreground text-sm mt-2 line-clamp-2 italic">
                         {card.fixedAnswer}
                       </p>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
                       {card.tags.map(tag => (
-                        <span key={tag} className="badge flex items-center gap-1">
-                          <Tag size={8} />
+                        <span key={tag} className="badge flex items-center gap-1 text-[10px] px-2 py-0.5 border border-border bg-secondary/50">
+                          <Tag size={8} className="text-primary/70" />
                           {tag}
                         </span>
                       ))}
@@ -256,7 +256,7 @@ export const FlashcardAdminPage: React.FC = () => {
             ))}
 
             {filteredCards.length === 0 && !loading && (
-              <div className="py-20 text-center rounded-3xl border-2 border-dashed border-border">
+              <div className="py-20 text-center rounded-3xl border-2 border-dashed border-border bg-card/5">
                 <p className="font-medium text-neutral-foreground">
                   No cards found matching your search.
                 </p>
