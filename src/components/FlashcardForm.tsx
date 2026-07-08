@@ -68,24 +68,28 @@ export const FlashcardForm: React.FC<FlashcardFormProps> = ({
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div className="form-group">
           <label className="form-label">Question</label>
           <textarea
             required
             value={formData.question}
             onChange={e => setFormData({ ...formData, question: e.target.value })}
+            placeholder="e.g., What is the difference between a process and a thread?"
             className="form-textarea"
+            rows={3}
           />
         </div>
 
         <div className="form-group">
-          <label className="form-label">Fixed Answer</label>
+          <label className="form-label">Fixed Answer (Expected Answer)</label>
           <textarea
             required
             value={formData.fixedAnswer}
             onChange={e => setFormData({ ...formData, fixedAnswer: e.target.value })}
+            placeholder="e.g., A process has its own address space, while threads of a process share the same memory."
             className="form-textarea"
+            rows={3}
           />
         </div>
 
@@ -96,6 +100,7 @@ export const FlashcardForm: React.FC<FlashcardFormProps> = ({
               required
               value={formData.questionPrompt}
               onChange={e => setFormData({ ...formData, questionPrompt: e.target.value })}
+              placeholder="e.g., Explain process vs thread memory spaces."
               className="form-input"
             />
           </div>
@@ -118,17 +123,17 @@ export const FlashcardForm: React.FC<FlashcardFormProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="form-group">
             <label className="form-label">Difficulty (1–5)</label>
-            <input
-              type="number"
-              min="1"
-              max="5"
+            <select
               value={formData.difficulty}
-              onChange={e => {
-                const parsed = parseInt(e.target.value, 10);
-                setFormData({ ...formData, difficulty: Number.isNaN(parsed) ? formData.difficulty : parsed });
-              }}
-              className="form-input"
-            />
+              onChange={e => setFormData({ ...formData, difficulty: Number(e.target.value) })}
+              className="form-select"
+            >
+              <option value="1">1 - Easiest</option>
+              <option value="2">2 - Easy</option>
+              <option value="3">3 - Medium</option>
+              <option value="4">4 - Hard</option>
+              <option value="5">5 - Expert</option>
+            </select>
           </div>
           <div className="flex items-center gap-4 pt-6">
             <label className="form-checkbox-wrapper cursor-pointer group">
@@ -157,35 +162,26 @@ export const FlashcardForm: React.FC<FlashcardFormProps> = ({
 
         <div className="form-group">
           <label className="form-label">Tags</label>
-          <div className="max-h-40 overflow-y-auto space-y-4 pr-2">
-            {Object.entries(TAG_CATEGORIES).map(([category, tags]: [string, string[]]) => (
-              <div key={category} className="space-y-2">
-                <p className="text-[9px] text-neutral-foreground font-bold uppercase tracking-widest">
-                  {category}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {tags.map(tag => (
-                    <button
-                      type="button"
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={cn(
-                        'badge transition-all duration-200',
-                        formData.tags.includes(tag)
-                          ? 'badge-info'
-                          : 'hover:border-primary/50',
-                      )}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          <div className="flex flex-wrap gap-2 pt-1 max-h-36 overflow-y-auto pr-1">
+            {Object.values(TAG_CATEGORIES).flat().map(tag => (
+              <button
+                type="button"
+                key={tag}
+                onClick={() => toggleTag(tag)}
+                className={cn(
+                  'badge text-[10px] transition-all duration-200 cursor-pointer',
+                  formData.tags.includes(tag)
+                    ? 'badge-info'
+                    : 'hover:border-primary/50',
+                )}
+              >
+                {tag}
+              </button>
             ))}
           </div>
         </div>
 
-        <div className="flex gap-4 pt-4">
+        <div className="flex gap-4 pt-4 border-t border-border/20">
           <button
             type="button"
             onClick={onCancel}

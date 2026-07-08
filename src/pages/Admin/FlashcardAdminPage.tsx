@@ -162,7 +162,7 @@ export const FlashcardAdminPage: React.FC = () => {
                   setFilterCardType('all');
                   setFilterActive('all');
                 }}
-                className="button button-sm button-secondary gap-2 w-full md:w-auto"
+                className="button button-sm button-secondary p-2.5! w-full md:w-auto"
                 title="Reset Filters"
               >
                 <RotateCcw size={14} />
