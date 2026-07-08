@@ -641,7 +641,7 @@ export const SEED_CARDS: Flashcard[] = [
     questionPrompt: 'Reliable vs stream transport layers',
     tags: ['Networking'],
     difficulty: 1,
-    cardType: 'compare',
+    cardType: 'recall',
     isActive: true,
   },
   {

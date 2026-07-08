@@ -25,6 +25,9 @@ export const FlashcardAdminPage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<Flashcard | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterDifficulty, setFilterDifficulty] = useState<string>('all');
+  const [filterCardType, setFilterCardType] = useState<string>('all');
+  const [filterActive, setFilterActive] = useState<string>('all');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,11 +47,24 @@ export const FlashcardAdminPage: React.FC = () => {
     }
   };
 
-  const filteredCards = cards.filter(
-    card =>
+  const filteredCards = cards.filter(card => {
+    const matchesSearch =
       card.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      card.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())),
-  );
+      card.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesDifficulty =
+      filterDifficulty === 'all' || card.difficulty === parseInt(filterDifficulty, 10);
+
+    const matchesCardType =
+      filterCardType === 'all' || card.cardType === filterCardType;
+
+    const matchesActive =
+      filterActive === 'all' ||
+      (filterActive === 'active' && card.isActive) ||
+      (filterActive === 'inactive' && !card.isActive);
+
+    return matchesSearch && matchesDifficulty && matchesCardType && matchesActive;
+  });
 
   return (
     <Section id="admin-cards" className="min-h-screen max-w-6xl">
@@ -69,23 +85,64 @@ export const FlashcardAdminPage: React.FC = () => {
             <p className="text-neutral-foreground text-sm">Manage your technical flashcard collection</p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="relative">
+          <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+            {/* Search Input */}
+            <div className="relative flex-1 md:flex-initial">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-foreground" size={16} />
               <input
                 type="text"
                 placeholder="Search cards or tags…"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="form-input pl-10 w-full md:w-64"
+                className="form-input pl-10 w-full md:w-56"
               />
             </div>
+
+            {/* Filter Difficulty */}
+            <select
+              value={filterDifficulty}
+              onChange={e => setFilterDifficulty(e.target.value)}
+              className="form-select w-full md:w-32"
+            >
+              <option value="all">Difficulty: All</option>
+              <option value="1">Difficulty: 1</option>
+              <option value="2">Difficulty: 2</option>
+              <option value="3">Difficulty: 3</option>
+              <option value="4">Difficulty: 4</option>
+              <option value="5">Difficulty: 5</option>
+            </select>
+
+            {/* Filter Card Type */}
+            <select
+              value={filterCardType}
+              onChange={e => setFilterCardType(e.target.value)}
+              className="form-select w-full md:w-36"
+            >
+              <option value="all">Type: All</option>
+              <option value="recall">Recall</option>
+              <option value="understanding">Understanding</option>
+              <option value="structure">Structure</option>
+              <option value="fill-in">Fill-in</option>
+            </select>
+
+            {/* Filter Active Status */}
+            <select
+              value={filterActive}
+              onChange={e => setFilterActive(e.target.value)}
+              className="form-select w-full md:w-32"
+            >
+              <option value="all">Status: All</option>
+              <option value="active">Active Only</option>
+              <option value="inactive">Inactive Only</option>
+            </select>
+
+            {/* Create Card Button */}
             <button
               onClick={() => {
                 setEditingCard(undefined);
                 setIsFormOpen(true);
               }}
-              className="button button-primary p-2.5!"
+              className="button button-primary p-2.5! w-full md:w-auto"
             >
               <Plus size={20} />
             </button>
